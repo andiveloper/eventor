@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"github.com/andiveloper/eventor/pkg"
@@ -28,6 +29,23 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	kafkaConfig := pkg.NewEventorConfigs(yaml.Unmarshal, yamlConfig)
-	fmt.Println(kafkaConfig)
+	eventorConfigs := pkg.NewEventorConfigs(yaml.Unmarshal, yamlConfig)
+	fmt.Println(eventorConfigs)
+
+	ctx := context.Background()
+	for _, config := range eventorConfigs {
+		go pkg.NewEventor(config).Run(ctx)
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			if err := ctx.Err(); err != nil {
+				fmt.Printf("err: %s\n", err)
+				os.Exit(1)
+			} else {
+				os.Exit(0)
+			}
+		}
+	}
 }
