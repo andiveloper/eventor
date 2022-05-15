@@ -2,50 +2,45 @@ package main
 
 import (
 	"context"
-	"flag"
-	"fmt"
 	"github.com/andiveloper/eventor/pkg"
-	"gopkg.in/yaml.v3"
 	"os"
+	"os/signal"
+	"syscall"
 )
 
-type Options struct {
-	configFilename string
-}
-
-func ParseOptionsFromFlags() *Options {
-	configFilename := flag.String("f", "", "the path to config file")
-	flag.Parse()
-	if *configFilename == "" {
-		flag.Usage()
-		os.Exit(1)
-	}
-	return &Options{configFilename: *configFilename}
-}
-
 func main() {
-	options := ParseOptionsFromFlags()
-	yamlConfig, err := os.ReadFile(options.configFilename)
-	if err != nil {
-		panic(err)
-	}
-	eventorConfigs := pkg.NewEventorConfigs(yaml.Unmarshal, yamlConfig)
-	fmt.Println(eventorConfigs)
-
 	ctx := context.Background()
-	for _, config := range eventorConfigs {
-		go pkg.NewEventor(config).Run(ctx)
+
+	// catch SIGINT
+	ctx, cancel := context.WithCancel(ctx)
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
+	defer func() {
+		signal.Stop(c)
+		cancel()
+	}()
+
+	cli := pkg.NewCli()
+	for _, config := range *cli.ReadEventorConfigs() {
+		config := config
+		go func() {
+			logger := pkg.DefaultLogger(pkg.Level(config.LogLevel))
+			err := pkg.NewEventor(config, &pkg.KafkaMessageConsumer{}, &pkg.HttpApiCaller{}, &pkg.KafkaMessageProducer{}).Run(ctx, logger)
+			if err != nil {
+				logger.Errorf("An error occurred: %v", err)
+				cancel()
+			}
+		}()
 	}
 
-	for {
+	logger := pkg.DefaultLogger(pkg.INFO)
+	func() {
 		select {
+		case <-c:
+			logger.Info("cancelled")
+			cancel()
 		case <-ctx.Done():
-			if err := ctx.Err(); err != nil {
-				fmt.Printf("err: %s\n", err)
-				os.Exit(1)
-			} else {
-				os.Exit(0)
-			}
+			logger.Info("done")
 		}
-	}
+	}()
 }

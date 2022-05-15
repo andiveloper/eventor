@@ -2,9 +2,10 @@ package pkg
 
 type EventorConfig struct {
 	Name                 string
-	EventListener        EventListener        `yaml:"eventListener"`
-	EventHandler         EventHandler         `yaml:"eventHandler"`
-	EventResultProcessor EventResultProcessor `yaml:"eventResultProcessor"`
+	LogLevel             int
+	EventListener        EventListenerConfig        `yaml:"eventListener"`
+	EventHandler         EventHandlerConfig         `yaml:"eventHandler"`
+	EventResultProcessor EventResultProcessorConfig `yaml:"eventResultProcessor"`
 }
 
 type Unmarshaller interface {
@@ -20,24 +21,31 @@ func NewEventorConfigs(unmarshaller func(in []byte, out interface{}) error, data
 	return eventorConfigs
 }
 
-// EventListener defines a Kafka consumer
-type EventListener struct {
+type KafkaConsumerConfig = map[string]string
+
+// EventListenerConfig defines a Kafka producer
+type EventListenerConfig struct {
 	Type           string // 'kafka' is the only supported type for now
 	Topic          string
-	ConsumerConfig map[string]string `yaml:"consumerConfig"`
+	ConsumerConfig KafkaConsumerConfig `yaml:"consumerConfig"`
 }
 
-// EventHandler defines an HTTP endpoint to which the events' payload is sent to
-type EventHandler struct {
+type HttpHeaders = map[string]string
+
+// EventHandlerConfig defines an HTTP endpoint to which the events' payload is sent to
+type EventHandlerConfig struct {
 	Type    string // 'http' is the only supported type for now
+	Method  string
 	Url     string
-	Headers map[string]string
+	Headers HttpHeaders
 }
 
-// EventResultProcessor defines a Kafka producer which posts the response from the EventHandler to a Kafka topic
-type EventResultProcessor struct {
+type KafkaProducerConfig = map[string]string
+
+// EventResultProcessorConfig defines a Kafka producer which posts the response from the EventHandlerConfig to a Kafka topic
+type EventResultProcessorConfig struct {
 	Type           string // 'kafka' is the only supported type for now
 	Topic          string
 	When           []string
-	ProducerConfig map[string]string `yaml:"producerConfig"`
+	ProducerConfig KafkaProducerConfig `yaml:"producerConfig"`
 }
