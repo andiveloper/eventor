@@ -43,6 +43,16 @@ another Kafka topic called `MY_RESPONSE_TOPIC`.
 Only if the call to the http endpoint AND sending the event to 'MY_RESPONSE_TOPIC' was successful the message is
 committed.
 
+## Additional librdkafka setup to build/test/run on MacOS/arm64
+
+```bash
+brew install openssl
+brew install librdkafka
+brew install pkg-config
+export PKG_CONFIG_PATH="/opt/homebrew/opt/openssl@3/lib/pkgconfig"
+go build -tags dynamic -o eventor cmd/main.go
+```
+
 ## Sample usage
 
 ```bash
