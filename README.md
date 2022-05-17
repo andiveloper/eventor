@@ -5,7 +5,7 @@ microservice. It does that by consuming an event from a Kafka topic, sending the
 publishing the response onto another Kafka topic.
 
 In the cloud-native Kubernetes world a common use case could be to add `eventor` as a sidecar container to your existing pod.
-That way your so far synchronous RESTful service is immediately opened up for an event-driven architecture.
+That way your so far synchronous RESTful service is immediately opened up for an event-driven architecture without any code changes.
 
 ![eventor](eventor.png?raw=true "eventor")
 
