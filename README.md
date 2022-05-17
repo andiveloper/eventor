@@ -4,6 +4,11 @@
 microservice. It does that by consuming an event from a Kafka topic, sending the event to your REST API endpoint and
 publishing the response onto another Kafka topic.
 
+In the cloud-native Kubernetes world a common use case could be to add `eventor` as a sidecar container to your existing pod.
+That way your so far synchronous RESTful service is immediately opened up for an event-driven architecture.
+
+![eventor](eventor.png?raw=true "eventor")
+
 ## Sample config:
 
 ```yaml
